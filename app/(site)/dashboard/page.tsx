@@ -6,8 +6,6 @@ import Link from 'next/link'
 import { fetchCurrentProfile, getSupabaseBrowserClient } from '@/lib/supabaseClient'
 import { useSessionStore } from '@/store/useSessionStore'
 
-const supabase = getSupabaseBrowserClient()
-
 type Transaction = {
   id: string
   type: 'ingreso' | 'gasto'
@@ -37,6 +35,7 @@ export default function Dashboard() {
       setStatus('loading')
       setError(null)
 
+      const supabase = getSupabaseBrowserClient()
       const { user, profile, error: profileError } = await fetchCurrentProfile(supabase)
 
       if (!active) return

@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation'
 import { fetchCurrentProfile, getSupabaseBrowserClient } from '@/lib/supabaseClient'
 import { useSessionStore } from '@/store/useSessionStore'
 
-const supabase = getSupabaseBrowserClient()
-
 type FormState = {
   type: 'ingreso' | 'gasto'
   amount: string
@@ -50,6 +48,7 @@ export default function NewTransactionPage() {
         return
       }
 
+      const supabase = getSupabaseBrowserClient()
       const { user, profile, error: profileError } = await fetchCurrentProfile(supabase)
 
       if (!active) return
@@ -109,6 +108,7 @@ export default function NewTransactionPage() {
     setError(null)
     setIsSubmitting(true)
 
+    const supabase = getSupabaseBrowserClient()
     const { error: insertError } = await supabase.from('transactions').insert({
       type: form.type,
       amount: amountValue,

@@ -28,10 +28,13 @@ export type ProfileContext = {
   error?: string
 }
 
-export const fetchCurrentProfile = async (
-  client?: SupabaseClient
-): Promise<ProfileContext> => {
-  const supabase = client ?? getSupabaseBrowserClient()
+export const fetchCurrentProfile = async (client?: SupabaseClient): Promise<ProfileContext> => {
+  const isServer = typeof window === 'undefined'
+  const supabase = client ?? (!isServer ? getSupabaseBrowserClient() : null)
+
+  if (!supabase) {
+    return { user: null, profile: null, error: 'Supabase client no disponible en servidor' }
+  }
 
   const {
     data: { user },

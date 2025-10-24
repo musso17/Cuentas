@@ -4,8 +4,6 @@ import { useState } from 'react'
 
 import { getSupabaseBrowserClient } from '@/lib/supabaseClient'
 
-const supabase = getSupabaseBrowserClient()
-
 export default function Login() {
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
@@ -15,6 +13,8 @@ export default function Login() {
     e.preventDefault()
     setIsSubmitting(true)
     setMessage('')
+
+    const supabase = getSupabaseBrowserClient()
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
