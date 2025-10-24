@@ -138,26 +138,26 @@ create table if not exists monthly_balances (
   constraint month_unique unique (couple_id, month)
 );
 
-create view if not exists vw_monthly_flow as
+create or replace view vw_monthly_flow as
 select
-  couple_id,
-  date_trunc('month', occurred_on) as month,
-  sum(case when type = 'income' then amount else 0 end) as total_income,
-  sum(case when type = 'expense' then amount else 0 end) as total_expense,
-  sum(case when type = 'income' then amount else -amount end) as net_flow
-from transactions
-group by couple_id, date_trunc('month', occurred_on);
+  t.couple_id,
+  date_trunc('month', t.occurred_on)::date as month,
+  sum(case when t.type = 'income' then t.amount else 0 end) as total_income,
+  sum(case when t.type = 'expense' then t.amount else 0 end) as total_expense,
+  sum(case when t.type = 'income' then t.amount else -t.amount end) as net_flow
+from transactions t
+group by t.couple_id, date_trunc('month', t.occurred_on);
 
-create view if not exists vw_category_distribution as
+create or replace view vw_category_distribution as
 select
-  couple_id,
-  date_trunc('month', occurred_on) as month,
-  categories.name as category_name,
-  categories.type,
-  sum(transactions.amount) as total_amount
-from transactions
-left join categories on categories.id = transactions.category_id
-group by couple_id, date_trunc('month', occurred_on), categories.name, categories.type;
+  t.couple_id,
+  date_trunc('month', t.occurred_on)::date as month,
+  c.name as category_name,
+  c.type,
+  sum(t.amount) as total_amount
+from transactions t
+left join categories c on c.id = t.category_id
+group by t.couple_id, date_trunc('month', t.occurred_on), c.name, c.type;
 
 -- enable row level security
 alter table couples enable row level security;
