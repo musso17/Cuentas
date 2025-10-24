@@ -4,7 +4,7 @@
   "scripts": {
     "postinstall": "npm install --prefix balance-app",
     "dev": "npm run dev --prefix balance-app",
-    "build": "npm run build --prefix balance-app",
+    "build": "npm run build --prefix balance-app && rm -rf .next && cp -R balance-app/.next .next",
     "start": "npm run start --prefix balance-app",
     "lint": "npm run lint --prefix balance-app"
   },
