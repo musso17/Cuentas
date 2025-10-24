@@ -200,11 +200,11 @@ export const useFinancialData = () => {
           throw errors[0];
         }
 
-        const balances = (balancesRes.data ?? []).map((row) => mapMonthlyBalance(row as MonthlyBalanceRow));
-        const transactions = (transactionsRes.data ?? []).map((row) => mapTransaction(row as TransactionRow));
-        const debts = (debtsRes.data ?? []).map((row) => mapDebt(row as DebtRow));
-        const savingsGoals = (savingsRes.data ?? []).map((row) => mapSaving(row as SavingRow));
-        const categories = (categoriesRes.data ?? []).map((row) => mapCategory(row as CategoryRow));
+        const balances = ((balancesRes.data ?? []) as MonthlyBalanceRow[]).map((row) => mapMonthlyBalance(row));
+        const transactions = ((transactionsRes.data ?? []) as TransactionRow[]).map((row) => mapTransaction(row));
+        const debts = ((debtsRes.data ?? []) as DebtRow[]).map((row) => mapDebt(row));
+        const savingsGoals = ((savingsRes.data ?? []) as SavingRow[]).map((row) => mapSaving(row));
+        const categories = ((categoriesRes.data ?? []) as CategoryRow[]).map((row) => mapCategory(row));
 
         if (cancelled) return;
 
