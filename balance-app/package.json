@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "parse:csv": "tsx scripts/seed-from-csv.ts"
+    "parse:csv": "tsx scripts/seed-from-csv.ts",
+    "sync:csv": "tsx scripts/import-csv-to-supabase.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
@@ -15,6 +16,7 @@
     "clsx": "^2.1.1",
     "csv-parse": "^6.1.0",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
     "lucide-react": "^0.546.0",
     "next": "16.0.0",
     "react": "19.2.0",
