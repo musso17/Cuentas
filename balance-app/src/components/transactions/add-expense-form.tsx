@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import type { Category, PaymentMethod } from '@/lib/types';
 import { cn, formatCurrency } from '@/lib/utils';
 
@@ -19,8 +19,8 @@ type FormState = {
   date: string;
 };
 
-const defaultState = (): FormState => ({
-  categoryName: '',
+const defaultState = (defaultCategory?: string): FormState => ({
+  categoryName: defaultCategory ?? '',
   amount: '',
   detail: '',
   paymentMethod: '',
@@ -29,18 +29,56 @@ const defaultState = (): FormState => ({
 });
 
 export const AddExpenseForm = ({ categories, paymentMethods, onCreated }: AddExpenseFormProps) => {
-  const [form, setForm] = useState<FormState>(defaultState);
+  const [form, setForm] = useState<FormState>(defaultState());
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const expenseCategories = useMemo(
-    () => categories.filter((category) => category.type === 'expense'),
-    [categories],
-  );
+  const expenseCategories = useMemo(() => {
+    const allowedOrder = [
+      'Alquiler',
+      'Compras Casa',
+      'Luz',
+      'Teléfono',
+      'Mantenimiento',
+      'Internet',
+      'Psicólogas',
+      'Membresías',
+      'Carro',
+      'Gasolina',
+      'Tere',
+      'Lavandería',
+      'Deporte',
+      'Laser',
+      'Gatos',
+      'Entretenimiento',
+      'Restaurantes',
+      'Taxis',
+      'Extras',
+      'Estacionalidad',
+      'Mantenimiento Carro',
+    ];
 
-  const handleChange = (field: keyof FormState) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm((prev) => ({ ...prev, [field]: event.target.value }));
-  };
+    const expenses = categories.filter((category) => category.type === 'expense');
+    const lookup = new Map(expenses.map((category) => [category.name, category]));
+    const ordered = allowedOrder
+      .map((name) => lookup.get(name))
+      .filter((category): category is Category => Boolean(category));
+    const remaining = expenses.filter((category) => !allowedOrder.includes(category.name));
+
+    return [...ordered, ...remaining];
+  }, [categories]);
+
+  useEffect(() => {
+    if (!form.categoryName && expenseCategories[0]) {
+      setForm(defaultState(expenseCategories[0].name));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expenseCategories]);
+
+  const handleChange = (field: keyof FormState) =>
+    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      setForm((prev) => ({ ...prev, [field]: event.target.value }));
+    };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -67,7 +105,7 @@ export const AddExpenseForm = ({ categories, paymentMethods, onCreated }: AddExp
           type: 'success',
           text: `Gasto registrado: ${formatCurrency(Number(form.amount || 0))}`,
         });
-        setForm(defaultState());
+        setForm(defaultState(expenseCategories[0]?.name));
         await onCreated();
       } catch (error) {
         setMessage({
@@ -84,19 +122,23 @@ export const AddExpenseForm = ({ categories, paymentMethods, onCreated }: AddExp
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label className="text-xs font-medium uppercase text-zinc-500">Descripción</label>
-          <input
+          <select
             required
-            list="category-options"
             value={form.categoryName}
             onChange={handleChange('categoryName')}
-            placeholder="Compras Casa, Gatos…"
             className="rounded-xl border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
-          />
-          <datalist id="category-options">
+          >
+            {expenseCategories.length === 0 ? (
+              <option value="" disabled>
+                Sin categorías disponibles
+              </option>
+            ) : null}
             {expenseCategories.map((category) => (
-              <option key={category.id} value={category.name} />
+              <option key={category.id} value={category.name}>
+                {category.name}
+              </option>
             ))}
-          </datalist>
+          </select>
         </div>
 
         <div className="flex flex-col gap-2">
