@@ -1,10 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabaseClient';
-import type { Category, Debt, MonthlyBalance, SavingGoal, Transaction } from '@/lib/types';
+import type {
+  Category,
+  Debt,
+  MonthlyBalance,
+  PaymentMethod,
+  SavingGoal,
+  Transaction,
+} from '@/lib/types';
 import {
   categories as mockCategories,
   debts as mockDebts,
   monthlyBalances as mockMonthlyBalances,
+  paymentMethods as mockPaymentMethods,
   savingsGoals as mockSavings,
   transactions as mockTransactions,
 } from '@/lib/mock-data';
@@ -145,9 +153,11 @@ type FinancialData = {
   debts: Debt[];
   savingsGoals: SavingGoal[];
   categories: Category[];
+  paymentMethods: PaymentMethod[];
   status: 'loading' | 'ready' | 'error';
   source: 'supabase' | 'mock';
   error?: string;
+  refresh: () => Promise<void>;
 };
 
 const initialState: FinancialData = {
@@ -156,101 +166,108 @@ const initialState: FinancialData = {
   debts: mockDebts,
   savingsGoals: mockSavings,
   categories: mockCategories,
+  paymentMethods: mockPaymentMethods,
   status: 'loading',
   source: 'mock',
+  refresh: async () => {},
 };
 
 export const useFinancialData = () => {
   const [state, setState] = useState<FinancialData>(initialState);
 
-  useEffect(() => {
-    let cancelled = false;
+  const load = useCallback(async () => {
+    try {
+      const supabase = createClient();
 
-    const load = async () => {
-      try {
-        const supabase = createClient();
+      const [
+        balancesRes,
+        transactionsRes,
+        debtsRes,
+        savingsRes,
+        categoriesRes,
+        paymentMethodsRes,
+      ] = await Promise.all([
+        supabase.from('monthly_balances').select('*').order('month'),
+        supabase
+          .from('transactions')
+          .select('*, categories(*), payment_methods(*), users(display_name)')
+          .order('occurred_on', { ascending: false })
+          .limit(200),
+        supabase.from('debts').select('*').order('created_at', { ascending: false }),
+        supabase.from('savings').select('*').order('created_at', { ascending: false }),
+        supabase.from('categories').select('*').order('name'),
+        supabase.from('payment_methods').select('*').order('name'),
+      ]);
 
-        const [
-          balancesRes,
-          transactionsRes,
-          debtsRes,
-          savingsRes,
-          categoriesRes,
-        ] = await Promise.all([
-          supabase.from('monthly_balances').select('*').order('month'),
-          supabase
-            .from('transactions')
-            .select('*, categories(*), payment_methods(*), users(display_name)')
-            .order('occurred_on', { ascending: false })
-            .limit(200),
-          supabase.from('debts').select('*').order('created_at', { ascending: false }),
-          supabase.from('savings').select('*').order('created_at', { ascending: false }),
-          supabase.from('categories').select('*').order('name'),
-        ]);
+      const errors = [
+        balancesRes.error,
+        transactionsRes.error,
+        debtsRes.error,
+        savingsRes.error,
+        categoriesRes.error,
+        paymentMethodsRes.error,
+      ].filter(Boolean);
 
-        const errors = [
-          balancesRes.error,
-          transactionsRes.error,
-          debtsRes.error,
-          savingsRes.error,
-          categoriesRes.error,
-        ].filter(Boolean);
+      if (errors.length) {
+        throw errors[0];
+      }
 
-        if (errors.length) {
-          throw errors[0];
-        }
+      const balances = ((balancesRes.data ?? []) as MonthlyBalanceRow[]).map((row) => mapMonthlyBalance(row));
+      const transactions = ((transactionsRes.data ?? []) as TransactionRow[]).map((row) => mapTransaction(row));
+      const debts = ((debtsRes.data ?? []) as DebtRow[]).map((row) => mapDebt(row));
+      const savingsGoals = ((savingsRes.data ?? []) as SavingRow[]).map((row) => mapSaving(row));
+      const categories = ((categoriesRes.data ?? []) as CategoryRow[]).map((row) => mapCategory(row));
+      const paymentMethods = (paymentMethodsRes.data ?? []).map((row) => ({
+        id: row.id,
+        name: row.name,
+        type: row.type,
+      }));
 
-        const balances = ((balancesRes.data ?? []) as MonthlyBalanceRow[]).map((row) => mapMonthlyBalance(row));
-        const transactions = ((transactionsRes.data ?? []) as TransactionRow[]).map((row) => mapTransaction(row));
-        const debts = ((debtsRes.data ?? []) as DebtRow[]).map((row) => mapDebt(row));
-        const savingsGoals = ((savingsRes.data ?? []) as SavingRow[]).map((row) => mapSaving(row));
-        const categories = ((categoriesRes.data ?? []) as CategoryRow[]).map((row) => mapCategory(row));
+      // Use Supabase data only if there is meaningful content, otherwise keep mock
+      const hasAnyData =
+        balances.length ||
+        transactions.length ||
+        debts.length ||
+        savingsGoals.length ||
+        categories.length ||
+        paymentMethods.length;
 
-        if (cancelled) return;
-
-        // Use Supabase data only if there is meaningful content, otherwise keep mock
-        const hasAnyData =
-          balances.length ||
-          transactions.length ||
-          debts.length ||
-          savingsGoals.length ||
-          categories.length;
-
-        if (hasAnyData) {
-          setState({
-            monthlyBalances: balances.length ? balances : mockMonthlyBalances,
-            transactions: transactions.length ? transactions : mockTransactions,
-            debts: debts.length ? debts : mockDebts,
-            savingsGoals: savingsGoals.length ? savingsGoals : mockSavings,
-            categories: categories.length ? categories : mockCategories,
-            status: 'ready',
-            source: 'supabase',
-          });
-        } else {
-          setState((prev) => ({
-            ...prev,
-            status: 'ready',
-            source: 'mock',
-          }));
-        }
-      } catch (error) {
-        if (cancelled) return;
-        console.error('[useFinancialData] Error fetching Supabase data', error);
+      if (hasAnyData) {
+        setState({
+          monthlyBalances: balances.length ? balances : mockMonthlyBalances,
+          transactions: transactions.length ? transactions : mockTransactions,
+          debts: debts.length ? debts : mockDebts,
+          savingsGoals: savingsGoals.length ? savingsGoals : mockSavings,
+          categories: categories.length ? categories : mockCategories,
+          paymentMethods: paymentMethods.length ? paymentMethods : mockPaymentMethods,
+          status: 'ready',
+          source: 'supabase',
+          error: undefined,
+          refresh: load,
+        });
+      } else {
         setState((prev) => ({
           ...prev,
-          status: 'error',
+          status: 'ready',
           source: 'mock',
-          error: error instanceof Error ? error.message : 'Error desconocido al conectar con Supabase',
+          refresh: load,
         }));
       }
-    };
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
+    } catch (error) {
+      console.error('[useFinancialData] Error fetching Supabase data', error);
+      setState((prev) => ({
+        ...prev,
+        status: 'error',
+        source: 'mock',
+        error: error instanceof Error ? error.message : 'Error desconocido al conectar con Supabase',
+        refresh: load,
+      }));
+    }
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return state;
 };

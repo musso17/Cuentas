@@ -2,6 +2,7 @@ import type {
   Category,
   Debt,
   MonthlyBalance,
+  PaymentMethod,
   SavingGoal,
   Transaction,
 } from './types';
@@ -46,12 +47,18 @@ export const categories: Category[] = [
   { id: 'cat-income-savings', name: 'Ahorros', type: 'income' },
 ];
 
+export const paymentMethods: PaymentMethod[] = [
+  { id: 'pm-amex', name: 'Amex', type: 'credit_card' },
+  { id: 'pm-cash', name: 'Cash', type: 'cash' },
+  { id: 'pm-banca', name: 'Cuenta conjunta', type: 'transfer' },
+];
+
 export const transactions: Transaction[] = [
-  { id: 'tx-1', type: 'income', amount: 13250, currency: 'PEN', occurredOn: '2025-03-01', category: categories[6], person: 'Marcelo', note: 'Sueldo mensual' },
-  { id: 'tx-2', type: 'income', amount: 13250, currency: 'PEN', occurredOn: '2025-03-01', category: categories[5], person: 'Ana', note: 'Sueldo mensual' },
-  { id: 'tx-3', type: 'expense', amount: 2800, currency: 'PEN', occurredOn: '2025-03-02', category: categories[0], person: 'Marcelo', note: 'Alquiler y mantenimiento' },
-  { id: 'tx-4', type: 'expense', amount: 980, currency: 'PEN', occurredOn: '2025-03-05', category: categories[2], person: 'Ana', note: 'Cena aniversario' },
-  { id: 'tx-5', type: 'expense', amount: 450, currency: 'PEN', occurredOn: '2025-03-07', category: categories[3], person: 'Marcelo', note: 'Control veterinario' },
+  { id: 'tx-1', type: 'income', amount: 13250, currency: 'PEN', occurredOn: '2025-03-01', category: categories[6], person: 'Marcelo', note: 'Sueldo mensual', paymentMethod: paymentMethods[2] },
+  { id: 'tx-2', type: 'income', amount: 13250, currency: 'PEN', occurredOn: '2025-03-01', category: categories[5], person: 'Ana', note: 'Sueldo mensual', paymentMethod: paymentMethods[2] },
+  { id: 'tx-3', type: 'expense', amount: 2800, currency: 'PEN', occurredOn: '2025-03-02', category: categories[0], person: 'Marcelo', note: 'Alquiler y mantenimiento', paymentMethod: paymentMethods[2] },
+  { id: 'tx-4', type: 'expense', amount: 980, currency: 'PEN', occurredOn: '2025-03-05', category: categories[2], person: 'Ana', note: 'Cena aniversario', paymentMethod: paymentMethods[0] },
+  { id: 'tx-5', type: 'expense', amount: 450, currency: 'PEN', occurredOn: '2025-03-07', category: categories[3], person: 'Marcelo', note: 'Control veterinario', paymentMethod: paymentMethods[1] },
   { id: 'tx-6', type: 'expense', amount: 1900, currency: 'PEN', occurredOn: '2025-03-10', category: categories[1], person: 'Ana', note: 'Pago tarjeta crédito' },
   { id: 'tx-7', type: 'income', amount: 7500, currency: 'PEN', occurredOn: '2025-07-15', category: categories[7], person: 'Marcelo', note: 'Gratificación Fiestas Patrias' },
   { id: 'tx-8', type: 'income', amount: 5000, currency: 'PEN', occurredOn: '2024-12-20', category: categories[7], person: 'Ana', note: 'Bono de fin de año' },

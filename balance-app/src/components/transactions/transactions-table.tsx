@@ -1,11 +1,41 @@
 import type { Transaction } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 
+type Variant = 'default' | 'expenses-simple';
+
 type TransactionsTableProps = {
   transactions: Transaction[];
+  variant?: Variant;
 };
 
-export const TransactionsTable = ({ transactions }: TransactionsTableProps) => (
+const ExpensesTable = ({ transactions }: { transactions: Transaction[] }) => (
+  <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+    <table className="min-w-full divide-y divide-zinc-200 text-sm">
+      <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
+        <tr>
+          <th className="px-4 py-3">Descripción</th>
+          <th className="px-4 py-3 text-right">Monto</th>
+          <th className="px-4 py-3">Detalle</th>
+          <th className="px-4 py-3">Tipo</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-zinc-100">
+        {transactions.map((tx) => (
+          <tr key={tx.id} className="hover:bg-zinc-50/80">
+            <td className="px-4 py-3 font-medium text-zinc-900">{tx.category?.name ?? 'Sin categoría'}</td>
+            <td className="px-4 py-3 text-right font-semibold text-zinc-900">
+              {formatCurrency(tx.amount)}
+            </td>
+            <td className="px-4 py-3 text-zinc-500">{tx.note ?? '—'}</td>
+            <td className="px-4 py-3 text-zinc-600">{tx.paymentMethod?.name ?? 'Sin método'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
+
+const DefaultTable = ({ transactions }: { transactions: Transaction[] }) => (
   <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
     <table className="min-w-full divide-y divide-zinc-200 text-sm">
       <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
@@ -36,3 +66,10 @@ export const TransactionsTable = ({ transactions }: TransactionsTableProps) => (
     </table>
   </div>
 );
+
+export const TransactionsTable = ({ transactions, variant = 'default' }: TransactionsTableProps) => {
+  if (variant === 'expenses-simple') {
+    return <ExpensesTable transactions={transactions} />;
+  }
+  return <DefaultTable transactions={transactions} />;
+};

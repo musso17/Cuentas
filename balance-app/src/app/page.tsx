@@ -6,6 +6,7 @@ import { OverviewCards } from '@/components/dashboard/overview-cards';
 import { MonthlyFlowChart } from '@/components/dashboard/monthly-flow-chart';
 import { CategoryDistributionChart } from '@/components/dashboard/category-distribution-chart';
 import { TransactionsTable } from '@/components/transactions/transactions-table';
+import { AddExpenseForm } from '@/components/transactions/add-expense-form';
 import { DebtsOverview } from '@/components/debts/debts-overview';
 import { SavingsProgress } from '@/components/savings/savings-progress';
 import { BudgetStatus } from '@/components/reports/budget-status';
@@ -26,8 +27,18 @@ const ModuleWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 export default function HomePage() {
-  const { monthlyBalances, transactions, debts, savingsGoals, categories, status, source, error } =
-    useFinancialData();
+  const {
+    monthlyBalances,
+    transactions,
+    debts,
+    savingsGoals,
+    categories,
+    paymentMethods,
+    status,
+    source,
+    error,
+    refresh,
+  } = useFinancialData();
   const [activeModule, setActiveModule] = useState<string>('dashboard');
   const [userSelectedMonth, setUserSelectedMonth] = useState<string | null>(null);
 
@@ -178,8 +189,15 @@ export default function HomePage() {
   const renderTransactions = () => (
     <ModuleWrapper>
       <h2 className="text-2xl font-semibold text-zinc-900">Gastos del mes</h2>
+      <AddExpenseForm
+        categories={categories}
+        paymentMethods={paymentMethods}
+        onCreated={async () => {
+          await refresh();
+        }}
+      />
       <div className="grid gap-4 xl:grid-cols-[1.5fr,1fr]">
-        <TransactionsTable transactions={expenses} />
+        <TransactionsTable transactions={expenses} variant="expenses-simple" />
         <Card title="Distribución por categoría">
           <ul className="space-y-3 text-sm">
             {expenseByCategory.map((item) => (
