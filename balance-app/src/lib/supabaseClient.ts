@@ -12,9 +12,5 @@ export const createClient = (): SupabaseClient => {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Supabase client not configured');
   }
-  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
-    cookieOptions: {
-      lifetime: 60 * 60 * 24 * 7, // 1 week
-    },
-  });
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 };
