@@ -1,0 +1,16 @@
+{
+  "name": "balance-compartido",
+  "private": true,
+  "scripts": {
+    "postinstall": "npm install --prefix balance-app",
+    "dev": "npm run dev --prefix balance-app",
+    "build": "npm run build --prefix balance-app",
+    "start": "npm run start --prefix balance-app",
+    "lint": "npm run lint --prefix balance-app"
+  },
+  "dependencies": {
+    "next": "16.0.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  }
+}
