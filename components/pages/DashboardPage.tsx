@@ -1,0 +1,119 @@
+import React, { useMemo, useEffect } from 'react';
+import { useFinanceStore } from '../../store/useFinanceStore';
+import Card, { CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
+import ExpenseChart from '../ExpenseChart';
+import { Transaction } from '../../types';
+import { capitalize } from '../../lib/utils';
+
+const RecentTransactions: React.FC<{ transactions: Transaction[] }> = ({ transactions }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle>Transacciones Recientes</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <ul className="space-y-4">
+        {transactions.slice(0, 5).map((tx) => (
+          <li key={tx.id} className="flex justify-between items-center">
+            <div>
+              <p className="font-medium">{tx.category}</p>
+              <p className="text-sm text-muted-foreground">{capitalize(tx.person)} - {new Date(tx.date + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'long' })}</p>
+            </div>
+            <p className={`font-semibold ${tx.type === 'ingreso' ? 'text-green-500' : 'text-red-500'}`}>
+              {tx.type === 'ingreso' ? '+' : '-'}S/{tx.amount.toLocaleString('es-PE')}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </CardContent>
+  </Card>
+);
+
+const BalanceSummary: React.FC<{ transactions: Transaction[] }> = ({ transactions }) => {
+    const FIXED_MONTHLY_INCOME = 16800;
+    
+    const totalExpense = transactions
+        .filter(tx => tx.type === 'gasto')
+        .reduce((sum, tx) => sum + tx.amount, 0);
+
+    const balance = FIXED_MONTHLY_INCOME - totalExpense;
+
+    // Lógica de distribución de ahorros
+    const savingsContribution = Math.max(0, balance);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Resumen del Mes</CardTitle>
+                <CardDescription>Basado en las transacciones del mes seleccionado</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-center">
+                <div>
+                    <p className="text-sm text-muted-foreground">Ingresos</p>
+                    <p className="text-2xl font-bold text-green-500">S/{FIXED_MONTHLY_INCOME.toLocaleString('es-PE')}</p>
+                </div>
+                 <div>
+                    <p className="text-sm text-muted-foreground">Gastos</p>
+                    <p className="text-2xl font-bold text-red-500">S/{totalExpense.toLocaleString('es-PE')}</p>
+                </div>
+                 <div>
+                    <p className="text-sm text-muted-foreground">Balance</p>
+                    <p className={`text-2xl font-bold ${balance >= 0 ? 'text-foreground' : 'text-red-500'}`}>S/{balance.toLocaleString('es-PE')}</p>
+                </div>
+                <div>
+                    <p className="text-sm text-muted-foreground">Ahorro del Mes</p>
+                    <p className="text-2xl font-bold text-blue-500">S/{savingsContribution.toLocaleString('es-PE')}</p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
+
+const DashboardPage: React.FC = () => {
+  const { transactions, loading, selectedDate } = useFinanceStore();
+  
+  // NOTE: The data fetching logic has been moved to App.tsx to ensure
+  // it runs once when the application loads, preventing race conditions
+  // and ensuring all components have access to the data from the start.
+  // The useEffect that was here has been removed.
+
+
+  const monthlyTransactions = useMemo(() => {
+    const year = selectedDate.getFullYear();
+    const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
+    const monthStr = `${year}-${month}`; // YYYY-MM
+
+    return transactions.filter(tx => tx.date.startsWith(monthStr));
+  }, [transactions, selectedDate]);
+
+  if (loading && transactions.length === 0) {
+    return (
+        <div className="text-center py-12">
+            <p className="text-muted-foreground">Cargando datos de tu hogar financiero...</p>
+        </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <BalanceSummary transactions={monthlyTransactions} />
+      {monthlyTransactions.length === 0 ? (
+         <div className="text-center py-20 bg-card rounded-lg border">
+          <p className="text-lg text-muted-foreground">No hay transacciones para el mes seleccionado.</p>
+          <p className="text-sm text-muted-foreground mt-1">¡Agrega un nuevo registro para empezar!</p>
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+            <div className="lg:col-span-3">
+                <RecentTransactions transactions={monthlyTransactions} />
+            </div>
+            <div className="lg:col-span-2">
+                <ExpenseChart transactions={monthlyTransactions} />
+            </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default DashboardPage;

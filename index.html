@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Balance Compartido</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              instrument: ['Instrument Sans', 'sans-serif'],
+            },
+            colors: {
+              'background': '#F9F9F9',
+              'foreground': '#111111',
+              'card': '#FFFFFF',
+              'card-foreground': '#111111',
+              'primary': '#0A0A0A',
+              'primary-foreground': '#F9F9F9',
+              'secondary': '#E5E5E5',
+              'secondary-foreground': '#111111',
+              'muted': '#F5F5F5',
+              'muted-foreground': '#737373',
+              'accent': '#4ADE80',
+              'accent-foreground': '#111111',
+              'destructive': '#F43F5E',
+              'border': '#E5E5E5',
+              'input': '#E5E5E5',
+              'ring': '#0A0A0A',
+            },
+             borderRadius: {
+              lg: `0.5rem`,
+              md: `calc(0.5rem - 2px)`,
+              sm: `calc(0.5rem - 4px)`,
+            },
+          }
+        }
+      }
+    </script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-background">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
